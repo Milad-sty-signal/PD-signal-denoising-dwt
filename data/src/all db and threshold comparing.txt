@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import pywt
 from ipywidgets import interact, Dropdown
 
-# Load your CSV file (assumes time is column A, signal is column C)
-df = pd.read_csv('your_file.csv')  # Replace with your filename
+# Load CSV file 
+df = pd.read_csv('Detected signals at 7 kV.csv')
 time = df.iloc[:, 0]
-signal = df.iloc[:, 2]  # PD amplitude (column C)
+signal = df.iloc[:, 2]  # PD amplitude
 
-# DWT denoising function
+# DWT
 def dwt_denoise(signal, wavelet, thresholding):
     level = pywt.dwt_max_level(len(signal), wavelet)
     coeffs = pywt.wavedec(signal, wavelet, level=level)
@@ -45,3 +45,4 @@ def plot_denoising(wavelet, thresholding):
 interact(plot_denoising,
          wavelet=Dropdown(options=['db2', 'db4', 'db6', 'db8', 'db10', 'db12'], value='db8'),
          thresholding=Dropdown(options=['soft', 'hard'], value='soft'))
+
