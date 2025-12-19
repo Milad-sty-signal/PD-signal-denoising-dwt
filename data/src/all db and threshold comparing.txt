@@ -1,0 +1,47 @@
+﻿pip install pywt matplotlib ipywidgets pandas
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import pywt
+from ipywidgets import interact, Dropdown
+
+# Load your CSV file (assumes time is column A, signal is column C)
+df = pd.read_csv('your_file.csv')  # Replace with your filename
+time = df.iloc[:, 0]
+signal = df.iloc[:, 2]  # PD amplitude (column C)
+
+# DWT denoising function
+def dwt_denoise(signal, wavelet, thresholding):
+    level = pywt.dwt_max_level(len(signal), wavelet)
+    coeffs = pywt.wavedec(signal, wavelet, level=level)
+    
+    sigma = np.median(np.abs(coeffs[-1])) / 0.6745
+    threshold = sigma * np.sqrt(2 * np.log(len(signal)))
+    
+    new_coeffs = [coeffs[0]]  # Keep approximation
+    for c in coeffs[1:]:
+        new_c = pywt.threshold(c, threshold, mode=thresholding)
+        new_coeffs.append(new_c)
+
+    denoised = pywt.waverec(new_coeffs, wavelet)
+    return denoised[:len(signal)]  # Trim to original length
+
+# Interactive plot function
+def plot_denoising(wavelet, thresholding):
+    denoised_signal = dwt_denoise(signal, wavelet, thresholding)
+    
+    plt.figure(figsize=(12, 5))
+    plt.plot(time, signal, label='Original Signal', alpha=0.5)
+    plt.plot(time, denoised_signal, label='Denoised Signal', linewidth=2)
+    plt.title(f'DWT Denoising with {wavelet} ({thresholding} thresholding)')
+    plt.xlabel('Time')
+    plt.ylabel('Amplitude')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+# Interactive widget
+interact(plot_denoising,
+         wavelet=Dropdown(options=['db2', 'db4', 'db6', 'db8', 'db10', 'db12'], value='db8'),
+         thresholding=Dropdown(options=['soft', 'hard'], value='soft'))
